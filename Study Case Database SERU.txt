@@ -1,0 +1,76 @@
+Study Case Database SERU
+
+1.	Tampilkan daftar siswa beserta kelas dan guru yang mengajar kelas tersebut
+
+SELECT siswa.name AS Siswa, class.name AS Kelas, guru.name AS Guru
+FROM [test_employee].[dbo].students siswa
+left join [test_employee].[dbo].classes class on class.id=siswa.class_id
+left join [test_employee].[dbo].teachers guru on class.teacher_id=guru.id
+
+
+2.	Tampilkan daftar kelas yang diajar oleh guru yang sama
+
+SELECT 
+    kelas.name AS Kelas
+FROM 
+    classes kelas
+JOIN 
+    teachers guru ON guru.id = kelas.teacher_id
+GROUP BY 
+    kelas.name
+HAVING 
+    COUNT(kelas.id) > 1;
+
+
+3.	Buat query view untuk siswa, kelas, dan guru yang mengajar
+
+CREATE VIEW KelasDetailView AS
+SELECT 
+    s.name AS Siswa,
+    c.name AS Kelas,
+    t.name AS Guru
+FROM 
+    students s
+JOIN 
+    classes c ON s.class_id = c.id
+JOIN 
+    teachers t ON c.teacher_id = t.id;
+
+
+4.	Buat query yang sama tapi menggunakan store_procedure
+
+CREATE PROCEDURE GetStudentClassTeacherInfo 
+AS 
+BEGIN 
+SELECT 
+	s.id AS student_id,
+	s.name AS student_name, 
+	s.age AS student_age, 
+	c.id AS class_id, 
+	c.name AS class_name, 
+	t.id AS teacher_id, 
+	t.name AS teacher_name, 
+	t.subject AS teacher_subject 
+FROM 
+	students s 
+JOIN classes c ON s.class_id = c.id 
+JOIN teachers t ON c.teacher_id = t.id; 
+END;
+
+
+5.	Buat query input, yang akan memberikan warning error jika ada data yang sama pernah masuk
+
+CREATE PROCEDURE InsertStudent @name VARCHAR(100), @age INT, @class_id INT 
+AS 
+BEGIN 
+IF EXISTS (SELECT 1 FROM students WHERE name = @name AND class_id = @class_id) 
+	BEGIN 
+	RAISERROR ('Nama Siswa Telah Terdaftar');
+END ELSE 
+BEGIN 
+INSERT INTO students (name, age, class_id) VALUES (@name, @age, @class_id); 
+PRINT 'Siswa Berhasil Di Input'; 
+END 
+END;
+
+
